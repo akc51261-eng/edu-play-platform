@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPlay - Multi-Subject Educational Games</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">EduPlay</div>
+        <div class="nav-links" id="navLinks">
+            <button onclick="showSection('explore')">Explore Games</button>
+            <button onclick="showSection('create')" id="createBtn" class="hidden">+ Create Content</button>
+            <button onclick="showSection('dashboard')" id="dashBtn" class="hidden">My Dashboard</button>
+            <button onclick="showSection('auth')" id="authBtn">Login / Register</button>
+            <button onclick="logout()" id="logoutBtn" class="hidden btn-danger">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Notification Toast -->
+    <div id="notificationBox" class="notification hidden"></div>
+
+    <main class="container">
+        <!-- 1. Auth Section -->
+        <section id="authSection" class="card hidden">
+            <h2 id="authTitle">Login to EduPlay</h2>
+            <form id="authForm">
+                <input type="text" id="username" placeholder="Full Name (for registration)" class="hidden">
+                <input type="email" id="email" placeholder="Email Address" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit" class="btn-primary" id="authSubmitBtn">Login</button>
+            </form>
+            <p class="toggle-text">
+                <span id="togglePrompt">Don't have an account?</span> 
+                <a href="#" onclick="toggleAuthMode()">Register here</a>
+            </p>
+        </section>
+
+        <!-- 2. Explore & Search Section -->
+        <section id="exploreSection">
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Search games..." onkeyup="renderGames()">
+                <select id="categoryFilter" onchange="handleCategoryChange()">
+                    <option value="All">All Subjects</option>
+                    <option value="Science">Science</option>
+                    <option value="Math">Math</option>
+                    <option value="General Knowledge">General Knowledge</option>
+                    <option value="Social Science">Social Science</option>
+                    <option value="Habits">Good & Bad Habits</option>
+                </select>
+                <!-- Science Sub-category Filter -->
+                <select id="subCategoryFilter" class="hidden" onchange="renderGames()">
+                    <option value="All">All Science (Physics, Chem, Bio)</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                </select>
+            </div>
+            <div id="gamesGrid" class="grid"></div>
+        </section>
+
+        <!-- 3. Create Content Section -->
+        <section id="createSection" class="card hidden">
+            <h2>Add New Educational Question / Game</h2>
+            <form id="createGameForm">
+                <input type="text" id="gameTitle" placeholder="Game Title (e.g., Space & Gravity)" required>
+                <select id="gameCategory" onchange="toggleCreateSubCat()">
+                    <option value="Science">Science</option>
+                    <option value="Math">Math</option>
+                    <option value="General Knowledge">General Knowledge</option>
+                    <option value="Social Science">Social Science</option>
+                    <option value="Habits">Good & Bad Habits</option>
+                </select>
+                <select id="gameSubCategory">
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                </select>
+                <textarea id="gameDesc" placeholder="Short description..." required></textarea>
+                <input type="text" id="gameQuestion" placeholder="Question text" required>
+                <input type="text" id="optA" placeholder="Option 1" required>
+                <input type="text" id="optB" placeholder="Option 2" required>
+                <input type="text" id="optC" placeholder="Option 3" required>
+                <input type="text" id="optD" placeholder="Option 4" required>
+                <input type="text" id="gameAnswer" placeholder="Exact Correct Option Text" required>
+                <button type="submit" class="btn-primary">Publish Game</button>
+            </form>
+        </section>
+
+        <!-- 4. Dashboard Section -->
+        <section id="dashboardSection" class="hidden">
+            <div class="card profile-card">
+                <h2>Student Profile</h2>
+                <p><strong>Name:</strong> <span id="profName"></span></p>
+                <p><strong>Email:</strong> <span id="profEmail"></span></p>
+                <p><strong>Enrolled Games:</strong> <span id="enrolledCount">0</span> | <strong>Completed:</strong> <span id="completedCount">0</span></p>
+            </div>
+            <h3>My Enrolled Games & Progress</h3>
+            <div id="enrolledGrid" class="grid"></div>
+        </section>
+
+        <!-- 5. Multi-Question Game Modal -->
+        <div id="gameModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle"></h2>
+                <span id="modalBadge" class="badge"></span>
+                <p id="modalDesc"></p>
+
+                <!-- Step 1: Select Question Count (5, 10, 20) -->
+                <div id="quizSetupBox" class="activity-box">
+                    <h4>Select Quiz Length</h4>
+                    <p style="margin: 8px 0; font-size: 0.9rem; color: #555;">Choose how many questions you want to attempt:</p>
+                    <div class="length-buttons">
+                        <button onclick="startQuiz(5)" class="btn-primary">5 Questions</button>
+                        <button onclick="startQuiz(10)" class="btn-primary">10 Questions</button>
+                        <button onclick="startQuiz(20)" class="btn-primary">20 Questions</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Active Quiz Screen -->
+                <div id="quizPlayBox" class="activity-box hidden">
+                    <div class="quiz-header">
+                        <span id="questionCounter">Question 1 of 5</span>
+                        <span id="liveScore">Score: 0</span>
+                    </div>
+                    <h4 id="quizQuestionText" style="margin: 15px 0;"></h4>
+                    <div id="optionsContainer" class="options-grid"></div>
+                </div>
+
+                <!-- Step 3: Result Screen -->
+                <div id="quizResultBox" class="activity-box hidden">
+                    <h3>Quiz Completed!</h3>
+                    <p id="finalScoreText" style="font-size: 1.1rem; margin: 10px 0;"></p>
+                    <button onclick="resetModalSetup()" class="btn-primary">Play Again</button>
+                </div>
+
+                <!-- Comments / Feedback -->
+                <div class="comments-box">
+                    <h4>Feedback & Comments</h4>
+                    <div id="commentsList"></div>
+                    <div class="comment-input">
+                        <input type="text" id="commentText" placeholder="Write feedback...">
+                        <button onclick="addComment()" class="btn-primary">Post</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
